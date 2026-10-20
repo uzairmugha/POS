@@ -1,0 +1,53 @@
+services:
+  app:
+    build: .
+    image: nexopos-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-nexopos}
+      DB_USERNAME: ${DB_USERNAME:-nexopos}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    ports:
+      - "8080:80"
+    volumes:
+      - app_storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - public
+      - db_private
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-nexopos}
+      MYSQL_USER: ${DB_USERNAME:-nexopos}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+    # No "ports:" — the database is never exposed to the host or internet.
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - db_private
+
+networks:
+  # Internet-facing network for the app only.
+  public:
+  # Internal: no route to the internet; only containers attached here (the app) can reach the db.
+  db_private:
+    internal: true
+
+volumes:
+  db_data:
+  app_storage:

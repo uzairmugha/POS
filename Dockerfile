@@ -1,10 +1,5 @@
-# ---- Frontend assets ----
-FROM node:20-alpine AS assets
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+# Frontend assets are prebuilt and committed in public/build.
+# Rebuild them locally with `npm run build` before pushing frontend changes.
 
 # ---- PHP dependencies ----
 FROM composer:2 AS vendor
@@ -30,7 +25,6 @@ RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-avail
 
 WORKDIR /var/www/html
 COPY --from=vendor /app /var/www/html
-COPY --from=assets /app/public/build /var/www/html/public/build
 
 RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache modules public \

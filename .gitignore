@@ -67,3 +67,10 @@ playwright/.auth/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Misc
+.DS_Store
+Thumbs.db
+.phpunit.cache/
+bootstrap/cache/*.php
+docker-compose.override.yml
